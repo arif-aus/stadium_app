@@ -1,86 +1,79 @@
-# System Architecture & Technical Specifications
+# Technical Stack & Architecture
 
-## Overview
+## Stack
 
-This document defines the system architecture, component boundaries, and technical constraints for the Stadium Security Management Application. The architecture adheres to strict separation of concerns, ensuring user interfaces, business routes, query logic, and physical storage remain decoupled.
+| Layer       | Technology              |
+|-------------|------------------------|
+| Frontend    | HTML, CSS, vanilla JS  |
+| Backend     | Python, Flask          |
+| Database    | SQLite (stadium.db)    |
 
----
+No frameworks, no libraries beyond Flask. Keep it simple.
 
-## Target Data Flow & Architecture
-
-Data flows unidirectionally through four distinct architectural layers:
+## Architecture: Four Layers
 
 ```
-+-------------------+        HTTP / JSON        +-------------------+
-|     Frontend      |  <--------------------->  |  Backend (Routes) |
-| (Web UI / Client) |                           |  (REST API Server)|
-+-------------------+                           +-------------------+
-                                                          |
-                                                  Function Calls / Py
-                                                          v
-+-------------------+        SQL / Parameters   +-------------------+
-| SQLite Database   |  <--------------------->  |    Data Layer     |
-|   (stadium.db)    |                           | (data_layer.py)   |
-+-------------------+                           +-------------------+
+Frontend (HTML/CSS/JS)
+    |
+    | HTTP / JSON
+    v
+Backend (Flask routes)
+    |
+    | Python function calls
+    v
+Data Layer (data_layer.py)
+    |
+    | SQL (parameterized)
+    v
+SQLite Database (stadium.db)
 ```
 
----
+Each layer has one job:
 
-## Component Boundaries & Layer Responsibilities
+1. **Frontend** — Displays the dashboard. Sends HTTP requests to the backend. Never sees SQL.
+2. **Backend** — Handles HTTP requests, validates input, returns JSON. Never writes SQL directly.
+3. **Data Layer** — The only place that touches the database. All SQL lives here.
+4. **Database** — Stores entry logs on disk so they survive server crashes.
 
-### 1. Frontend Layer
-* **Role**: User interaction, rendering security dashboards, entry log visualization, and gate alerts.
-* **Communication**: Communicates exclusively with the Backend via RESTful HTTP endpoints (`/api/...`).
-* **Constraints**: 
-  * Zero knowledge of database schemas, SQL syntax, or file paths.
-  * Formats outgoing payloads as JSON; parses incoming JSON responses.
+## Engineering Rules
 
-### 2. Backend Layer (API & Service Routing)
-* **Role**: HTTP request handling, route dispatching, request payload validation, HTTP status code formatting, and error handling.
-* **Communication**: Receives HTTP requests from Frontend; invokes Python methods in the Data Layer.
-* **Constraints**:
-  * Does not construct or execute raw SQL strings directly within route handlers.
-  * Delegates all persistence operations to `backend/data_layer.py`.
+### SQL Injection Prevention
+- **Never** build SQL with string formatting: `f"SELECT * FROM entries WHERE gate = '{gate}'"` — this is dangerous.
+- **Always** use parameterized queries: `cursor.execute("SELECT * FROM entries WHERE gate = ?", (gate,))` — this is safe.
 
-### 3. Data Layer (`backend/data_layer.py`)
-* **Role**: Database connection lifecycle management, SQL query generation, parameterized binding, transaction control (`COMMIT`/`ROLLBACK`), and row-to-dictionary translation.
-* **Communication**: Executes parameterized SQL commands against `stadium.db`.
-* **Constraints**:
-  * Acts as the sole access point to SQLite.
-  * All user inputs must be passed via query parameters (preventing SQL injection).
+### Boundary Enforcement
+- Backend routes must **never** import `sqlite3`. They call Data Layer methods instead.
+- Frontend must **never** know about the database file path or schema.
 
-### 4. Database Storage Layer (`stadium.db`)
-* **Role**: Persistent on-disk storage using SQLite 3.
-* **Location**: Root workspace / backend runtime folder (`stadium.db`).
-* **Constraints**:
-  * Single file storage with SQLite WAL (Write-Ahead Logging) enabled for local concurrency.
+### Data Integrity
+- Database writes use transactions. If something fails, we roll back — no half-written records.
 
----
-
-## Primary Data Schemas
+## Data Schema
 
 ### Table: `stadium_entries`
 
-Tracks individual badge scans and security gate event logs.
+| Column        | Type     | Description                          |
+|---------------|----------|--------------------------------------|
+| id            | INTEGER  | Auto-incrementing record ID          |
+| timestamp     | DATETIME | When the badge was scanned (UTC)     |
+| badge_id      | TEXT     | The person's badge identifier        |
+| gate          | TEXT     | Which gate (A, B, C, D)             |
+| entry_status  | TEXT     | GRANTED, DENIED, or FLAGGED          |
+| security_level| INTEGER  | Clearance level required for gate    |
+| notes         | TEXT     | Optional guard notes                 |
 
-| Column Name      | Data Type | Constraints               | Description                              |
-|------------------|-----------|---------------------------|------------------------------------------|
-| `id`             | INTEGER   | PRIMARY KEY AUTOINCREMENT | Unique entry record identifier           |
-| `timestamp`      | DATETIME  | NOT NULL DEFAULT CURRENT_TIMESTAMP | UTC timestamp of the entry scan |
-| `badge_id`       | TEXT      | NOT NULL                  | Unique identifier for attendee/staff     |
-| `gate`           | TEXT      | NOT NULL                  | Gate designation (e.g., `'A'`, `'B'`)   |
-| `entry_status`   | TEXT      | NOT NULL                  | Status (`'GRANTED'`, `'DENIED'`, `'FLAGGED'`) |
-| `security_level` | INTEGER   | NOT NULL DEFAULT 1        | Clearance level required for gate       |
-| `notes`          | TEXT      | NULL                      | Optional guard audit notes               |
+### Table: `gates`
 
----
+| Column        | Type    | Description                       |
+|---------------|---------|-----------------------------------|
+| id            | INTEGER | Auto-incrementing gate ID         |
+| name          | TEXT    | Gate label (A, B, C, D)          |
+| security_level| INTEGER | Minimum clearance to enter        |
+| status        | TEXT    | ACTIVE or LOCKED                  |
 
-## Security & Implementation Rules
+## Sensible Defaults
 
-1. **SQL Injection Prevention**:
-   * NEVER use string interpolation (`f"SELECT * FROM ... WHERE gate = '{gate}'"`) for SQL construction.
-   * ALWAYS use parameterized placeholders (`SELECT * FROM stadium_entries WHERE gate = ?`).
-2. **Boundary Enforcement**:
-   * No backend API route may import `sqlite3` directly. All database access calls `DataLayer` class methods.
-3. **Data Integrity**:
-   * Transactions must be wrapped in atomic blocks with proper error catching and rollback capabilities.
+- **Red/Green TDD** — Write a failing test first, then make it pass with minimal code.
+- **Spec-driven development** — Every feature starts with a written spec before code.
+- **Walking skeleton** — Build the thinnest end-to-end slice first, then grow features.
+- **Simplicity over complexity** — If a solution feels complicated, it probably is.
