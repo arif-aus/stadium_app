@@ -1,7 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # backend/app.py — Flask API server
-# STUB FILE — OpenCode will implement the route bodies below.
-# Read the comments to understand what each route must do.
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # ARCHITECTURAL BOUNDARY RULE (from SPECS/TECH.md):
@@ -72,8 +70,6 @@ def static_files(filename):
 #   3. Return the result as JSON with HTTP 200
 #   4. On error → return {"error": "..."} with HTTP 500
 #
-# OpenCode will implement this route body.
-#
 @app.route('/api/entries', methods=['GET'])
 @log_route('get_entries')
 def get_entries():
@@ -103,7 +99,7 @@ def health():
 #
 # host="0.0.0.0"  — required for Codio's preview panel to reach the server.
 #                   Never use "127.0.0.1" here or the preview will not load.
-# port=3000       — matches the Codio preview URL (https://HOSTNAME-3000.codio.io)
+# port=5000       — matches the Codio preview URL (https://HOSTNAME-5000.codio.io)
 # debug=True      — auto-reloads when you save a file during development.
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':

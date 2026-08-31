@@ -1,7 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // app.js — Security Command Dashboard
-// STUB FILE — OpenCode will implement the function bodies below.
-// Read the comments to understand what each function must do.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // The backend API base URL.

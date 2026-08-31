@@ -14,16 +14,16 @@ We have a working Flask backend with mock data. The next step is wiring it up to
 - [x] Mock entry log data
 - [x] Entry log schema defined
 
-### Phase 2: SQLite Data Layer `[IN PROGRESS]`
-- [ ] Initialize SQLite database (`stadium.db`)
-- [ ] Implement `backend/data_layer.py` — the only file that touches SQL
-- [ ] Create `stadium_entries` table
-- [ ] Refactor API routes to use the Data Layer
-- [ ] Verify data persists across server restarts
+### Phase 2: SQLite Data Layer `[COMPLETED]`
+- [x] Initialize SQLite database (`stadium.db`)
+- [x] Implement `backend/data_layer.py` — the only file that touches SQL
+- [x] Create `stadium_entries` table
+- [x] Refactor API routes to use the Data Layer
+- [x] Verify data persists across server restarts
 
-### Phase 3: Frontend Integration `[UPCOMING]`
-- [ ] Connect dashboard to live SQLite backend
-- [ ] Display entry logs in a table
+### Phase 3: Frontend Integration `[IN PROGRESS]`
+- [x] Connect dashboard to live SQLite backend
+- [x] Display entry logs in a table
 - [ ] Add search/filter by gate, badge ID, and time
 - [ ] Handle loading and error states in the UI
 
