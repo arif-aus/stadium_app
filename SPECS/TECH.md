@@ -52,24 +52,29 @@ Each layer has one job:
 
 ### Table: `stadium_entries`
 
-| Column        | Type     | Description                          |
-|---------------|----------|--------------------------------------|
-| id            | INTEGER  | Auto-incrementing record ID          |
-| timestamp     | DATETIME | When the badge was scanned (UTC)     |
-| badge_id      | TEXT     | The person's badge identifier        |
-| gate          | TEXT     | Which gate (A, B, C, D)             |
-| entry_status  | TEXT     | GRANTED, DENIED, or FLAGGED          |
-| security_level| INTEGER  | Clearance level required for gate    |
-| notes         | TEXT     | Optional guard notes                 |
+The live database (see `seed.sql`) uses this schema:
 
-### Table: `gates`
+| Column     | Type    | Description                              |
+|------------|---------|------------------------------------------|
+| id         | INTEGER | Auto-incrementing record ID              |
+| person_id  | INTEGER | Foreign key to `people(id)`              |
+| gate       | TEXT    | Which gate (A, B, C, D)                  |
+| hour       | INTEGER | Hour of day the person entered           |
+| bag        | TEXT    | Bag type (`none`, `bag`, `backpack`, etc.) |
 
-| Column        | Type    | Description                       |
-|---------------|---------|-----------------------------------|
-| id            | INTEGER | Auto-incrementing gate ID         |
-| name          | TEXT    | Gate label (A, B, C, D)          |
-| security_level| INTEGER | Minimum clearance to enter        |
-| status        | TEXT    | ACTIVE or LOCKED                  |
+### Table: `people`
+
+Holds attendee details, referenced by `stadium_entries.person_id`.
+
+| Column | Type    | Description              |
+|--------|---------|--------------------------|
+| id     | INTEGER | Person's unique ID       |
+| name   | TEXT    | Attendee name            |
+| phone  | TEXT    | Contact phone            |
+
+> Note: an earlier draft of this document listed a different schema
+> (`timestamp`, `badge_id`, `entry_status`, `security_level`, `notes`).
+> It was corrected to match the actual seeded database and the code.
 
 ## Sensible Defaults
 
